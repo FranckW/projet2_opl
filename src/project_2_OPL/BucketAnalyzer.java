@@ -29,6 +29,7 @@ public class BucketAnalyzer {
 
 		Map<File, CrashReport> stackTraceTraining = new HashMap<File, CrashReport>();
 		Map<File, CrashReport> stackTraceTesting = new HashMap<File, CrashReport>();
+		Map<String, String> result = new HashMap<String, String>();
 
 		fillKeywordsMap(stackTraceTesting, testingFiles);
 		fillKeywordsMap(stackTraceTraining, trainingFiles);
@@ -42,14 +43,33 @@ public class BucketAnalyzer {
 		// }
 
 		for (File testingFile : stackTraceTesting.keySet()) {
-			System.out.println(testingFile.getName());
-			for (File trainingFile : stackTraceTraining.keySet())
-				if (stackTraceTesting.get(testingFile).toString()
-						.equals(stackTraceTraining.get(trainingFile).toString())) {
-					System.out.println(testingFile.getName().substring(0, testingFile.getName().length() - 4) + " -> "
-							+ trainingFile.getParent().substring(trainingFile.getParent().length() - 10));
-					counter++;
+			System.out.println("file number : " + counter++ + " titled : " + testingFile.getName());
+			Map<String, Double> mapMatchValueBucketName = new HashMap<String, Double>();
+			for (File trainingFile : stackTraceTraining.keySet()) {
+				ArrayList<Double> lineMatchValues = new ArrayList<Double>();
+				for (CrashLine crashLineTesting : stackTraceTesting.get(testingFile).getCrashLines())
+					for (CrashLine crashLineTraining : stackTraceTraining.get(trainingFile).getCrashLines())
+						lineMatchValues.add(CrashLineComparator.compareLines(crashLineTesting, crashLineTraining));
+				double sum = 0;
+				for (Double distance : lineMatchValues)
+					sum += distance;
+				mapMatchValueBucketName.put(trainingFile.getParent(), sum);
+			}
+			String bucket = null;
+			Double maxMatchValue = 0.0;
+			for (String bucketName : mapMatchValueBucketName.keySet()) {
+				if (mapMatchValueBucketName.get(bucketName) > maxMatchValue) {
+					// System.out.println(mapMatchValueBucketName.get(bucketName));
+					maxMatchValue = mapMatchValueBucketName.get(bucketName);
+					bucket = bucketName.substring(bucketName.length() - 10);
 				}
+			}
+			result.put(testingFile.getName().substring(0, testingFile.getName().length() - 4), bucket);
+		}
+		counter = 0;
+		for (String testingFileName : result.keySet()) {
+			System.out.println(testingFileName + " -> " + result.get(testingFileName));
+			counter++;
 		}
 		System.out.println("" + counter);
 	}
