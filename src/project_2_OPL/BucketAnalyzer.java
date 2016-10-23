@@ -6,10 +6,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import keyword.AtKeyword;
 import keyword.FromKeyword;
@@ -58,16 +61,24 @@ public class BucketAnalyzer {
 			String bucket = null;
 			Double maxMatchValue = 0.0;
 			for (String bucketName : mapMatchValueBucketName.keySet()) {
-				if (mapMatchValueBucketName.get(bucketName) > maxMatchValue) {
-					// System.out.println(mapMatchValueBucketName.get(bucketName));
+				if (mapMatchValueBucketName.get(bucketName) > maxMatchValue) { //
+					System.out.println(mapMatchValueBucketName.get(bucketName));
 					maxMatchValue = mapMatchValueBucketName.get(bucketName);
 					bucket = bucketName.substring(bucketName.length() - 10);
 				}
 			}
 			result.put(testingFile.getName().substring(0, testingFile.getName().length() - 4), bucket);
 		}
+
 		counter = 0;
-		for (String testingFileName : result.keySet()) {
+		SortedSet<String> sortedList = new TreeSet<String>(new Comparator<String>() {
+			@Override
+			public int compare(String a, String b) {
+				return Integer.valueOf(a).compareTo(Integer.valueOf(b));
+			}
+		});
+		sortedList.addAll(result.keySet());
+		for (String testingFileName : sortedList) {
 			System.out.println(testingFileName + " -> " + result.get(testingFileName));
 			counter++;
 		}
