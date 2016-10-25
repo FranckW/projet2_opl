@@ -21,13 +21,14 @@ import keyword.Keyword;
 
 public class BucketAnalyzer {
 
-	public static List<File> trainingFiles = new ArrayList<File>();
-	public static List<File> testingFiles = new ArrayList<File>();
+	public List<File> trainingFiles = new ArrayList<File>();
+	public List<File> testingFiles = new ArrayList<File>();
 
-	public static Map<File, String> trainingFilesContent = new HashMap<File, String>();
-	public static Map<File, String> testingFilesContent = new HashMap<File, String>();
+	public Map<File, String> trainingFilesContent = new HashMap<File, String>();
+	public Map<File, String> testingFilesContent = new HashMap<File, String>();
+	public static Map<String, String> result = new HashMap<String, String>();
 
-	public static void main(String[] args) {
+	public void analyze() {
 		final File folderTesting = new File("nautilus-testing");
 		final File folderTraining = new File("nautilus-training");
 		getAllFiles(folderTraining, trainingFiles);
@@ -35,7 +36,19 @@ public class BucketAnalyzer {
 
 		Map<String, CrashReport> stackTraceTraining = new HashMap<String, CrashReport>();
 		Map<String, CrashReport> stackTraceTesting = new HashMap<String, CrashReport>();
-		Map<String, String> result = new HashMap<String, String>();
+
+		// dummy version random
+		// for (File testingFile : testingFiles) {
+		// int rand = (int) (Math.random() * (trainingFiles.size()) - 1);
+		// while ((trainingFiles.get(rand).length() <= testingFile.length() +
+		// 1000)
+		// && (trainingFiles.get(rand).length() >= testingFile.length() - 1000))
+		// rand = (int) (Math.random() * (trainingFiles.size()) - 1);
+		// result.put(testingFile.getName().substring(0,
+		// testingFile.getName().length() - 4),
+		// trainingFiles.get(rand).getParent().substring(trainingFiles.get(rand).getParent().length()
+		// - 10));
+		// }
 
 		loadContentOfFiles(testingFiles, testingFilesContent);
 		loadContentOfFiles(trainingFiles, trainingFilesContent);
@@ -43,44 +56,41 @@ public class BucketAnalyzer {
 		fillKeywordsMap(stackTraceTesting, testingFilesContent);
 		fillKeywordsMap(stackTraceTraining, trainingFilesContent);
 
-		int counter = 0;
-		// for(File testingFile : testingFilesContent.keySet())
-		// for(File trainingFile : trainingFilesContent.keySet()) {
-		// Double maxValue = 0.0;
-		//
-		// Double distance =
-		// StringSimilarity.similarity(testingFilesContent.get(testingFile),
-		// trainingFilesContent.get(trainingFile));
-		// if distance
-		// }
+		List<Thread> threads = new ArrayList<Thread>();
 		for (File testingFile : testingFilesContent.keySet()) {
-			System.out.println("file number : " + counter++ + " titled : " + testingFile.getName());
-			Map<String, Double> mapMatchValueBucketName = new HashMap<String, Double>();
-			for (File trainingFile : trainingFilesContent.keySet()) {
-				ArrayList<Double> lineMatchValues = new ArrayList<Double>();
-				for (CrashLine crashLineTesting : stackTraceTesting.get(testingFilesContent.get(testingFile))
-						.getCrashLines())
-					if (stackTraceTraining.get(trainingFilesContent.get(trainingFile)) != null)
-						for (CrashLine crashLineTraining : stackTraceTraining
-								.get(trainingFilesContent.get(trainingFile)).getCrashLines())
-							lineMatchValues.add(CrashLineComparator.compareLines(crashLineTesting, crashLineTraining));
-				double sum = 0;
-				for (Double distance : lineMatchValues)
-					sum += distance;
-				mapMatchValueBucketName.put(trainingFile.getParent(), sum);
-			}
-			String bucket = null;
-			Double maxMatchValue = 1000000000.0;
-			for (String bucketName : mapMatchValueBucketName.keySet()) {
-				if (mapMatchValueBucketName.get(bucketName) < maxMatchValue) {
-					maxMatchValue = mapMatchValueBucketName.get(bucketName);
-					bucket = bucketName.substring(bucketName.length() - 10);
-				}
-			}
-			result.put(testingFile.getName().substring(0, testingFile.getName().length() - 4), bucket);
+			TestingFileAnalyzeThread testingFileAnalyzeThread = new TestingFileAnalyzeThread(stackTraceTraining,
+					stackTraceTesting, trainingFilesContent, testingFilesContent, testingFile);
+			Thread t = new Thread(testingFileAnalyzeThread);
+			threads.add(t);
+			t.start();
 		}
 
-		counter = 0;
+		for (Thread t : threads)
+			try {
+				t.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		// for (File testingFile : testingFilesContent.keySet()) {
+		// System.out.println("file number : " + counter++ + " titled : " +
+		// testingFile.getName());
+		// Map<Double, File> lineMatchValues = new HashMap<Double, File>();
+		// for (File trainingFile : trainingFilesContent.keySet()) {
+		// lineMatchValues.put(CrashLineComparator.compareFiles(testingFile,
+		// trainingFile), trainingFile);
+		// }
+		// Double maxMatchValue = Double.MAX_VALUE;
+		// String bucket = "";
+		// for (Double value : lineMatchValues.keySet())
+		// if (value < maxMatchValue) {
+		// maxMatchValue = value;
+		// bucket = lineMatchValues.get(value).getParent()
+		// .substring(lineMatchValues.get(value).getParent().length() - 10);
+		// }
+		// result.put(testingFile.getName().substring(0,
+		// testingFile.getName().length() - 4), bucket);
+		// }
 		SortedSet<String> sortedList = new TreeSet<String>(new Comparator<String>() {
 			@Override
 			public int compare(String a, String b) {
@@ -88,14 +98,11 @@ public class BucketAnalyzer {
 			}
 		});
 		sortedList.addAll(result.keySet());
-		for (String testingFileName : sortedList) {
+		for (String testingFileName : sortedList)
 			System.out.println(testingFileName + " -> " + result.get(testingFileName));
-			counter++;
-		}
-		System.out.println("" + counter);
 	}
 
-	private static void loadContentOfFiles(List<File> files, Map<File, String> filesContent) {
+	private void loadContentOfFiles(List<File> files, Map<File, String> filesContent) {
 		FileReader fileReader = null;
 		for (File file : files) {
 			try {
@@ -122,7 +129,7 @@ public class BucketAnalyzer {
 		}
 	}
 
-	private static void fillKeywordsMap(Map<String, CrashReport> stackTraceMap, Map<File, String> filesContent) {
+	private void fillKeywordsMap(Map<String, CrashReport> stackTraceMap, Map<File, String> filesContent) {
 		String fileContent = null;
 		for (File file : filesContent.keySet()) {
 			fileContent = filesContent.get(file);
@@ -151,7 +158,7 @@ public class BucketAnalyzer {
 
 	}
 
-	private static void getAllKeywordsFromLine(String line, CrashLine crashLine) {
+	private void getAllKeywordsFromLine(String line, CrashLine crashLine) {
 		Scanner scanner = new Scanner(line);
 		String word = null;
 		Keyword keyword;
@@ -187,13 +194,12 @@ public class BucketAnalyzer {
 
 	}
 
-	public static void getAllFiles(File folder, List<File> fileList) {
+	private void getAllFiles(File folder, List<File> fileList) {
 		for (final File fileEntry : folder.listFiles())
-			if (fileEntry.isDirectory()) {
+			if (fileEntry.isDirectory())
 				getAllFiles(fileEntry, fileList);
-			} else {
+			else if (!fileList.contains(fileEntry))
 				fileList.add(fileEntry);
-			}
 	}
 
 }
