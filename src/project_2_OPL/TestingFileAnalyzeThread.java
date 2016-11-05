@@ -34,16 +34,30 @@ public class TestingFileAnalyzeThread implements Runnable {
 					.getCrashLines())
 				if (stackTraceTraining.get(trainingFilesContent.get(trainingFile)) != null)
 					for (CrashLine crashLineTraining : stackTraceTraining.get(trainingFilesContent.get(trainingFile))
-							.getCrashLines())
-						lineMatchValues.add(CrashLineComparator.compareLines(crashLineTesting, crashLineTraining));
+							.getCrashLines()) {
+						boolean isInMatchingSequence = false;
+						double matchScore = CrashLineComparator.compareLines(crashLineTesting, crashLineTraining,
+								isInMatchingSequence);
+						if (matchScore < 100) {
+							isInMatchingSequence = false;
+						} else {
+							isInMatchingSequence = true;
+						}
+						lineMatchValues.add(matchScore);
+					}
 			double sum = 0;
 			for (Double distance : lineMatchValues)
 				sum += distance;
-			mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), sum);
+			if (mapMatchValueBucketName.containsKey(trainingFile.getParentFile().getParent())) {
+				if (mapMatchValueBucketName.get(trainingFile.getParentFile().getParent()) > sum)
+					mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), sum);
+			} else {
+				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), sum);
+			}
 			String bucket = null;
-			Double maxMatchValue = Double.MAX_VALUE;
+			Double maxMatchValue = 0.0;
 			for (String bucketName : mapMatchValueBucketName.keySet()) {
-				if (mapMatchValueBucketName.get(bucketName) < maxMatchValue) {
+				if (mapMatchValueBucketName.get(bucketName) > maxMatchValue) {
 					maxMatchValue = mapMatchValueBucketName.get(bucketName);
 					bucket = bucketName.substring(bucketName.length() - 9);
 				}

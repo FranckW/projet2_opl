@@ -56,6 +56,15 @@ public class BucketAnalyzer {
 		fillKeywordsMap(stackTraceTesting, testingFilesContent);
 		fillKeywordsMap(stackTraceTraining, trainingFilesContent);
 
+		for (File file : testingFilesContent.keySet()) {
+			System.out.println(file.getName());
+			for (CrashLine crashLine : stackTraceTesting.get(testingFilesContent.get(file)).getCrashLines()) {
+				System.out.println("#" + crashLine.getLineNumber());
+				for (Keyword keyword : crashLine.getKeywords())
+					System.out.print(" " + keyword.getValue());
+			}
+		}
+
 		List<Thread> threads = new ArrayList<Thread>();
 		for (File testingFile : testingFilesContent.keySet()) {
 			TestingFileAnalyzeThread testingFileAnalyzeThread = new TestingFileAnalyzeThread(stackTraceTraining,
@@ -71,26 +80,6 @@ public class BucketAnalyzer {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-
-		// for (File testingFile : testingFilesContent.keySet()) {
-		// System.out.println("file number : " + counter++ + " titled : " +
-		// testingFile.getName());
-		// Map<Double, File> lineMatchValues = new HashMap<Double, File>();
-		// for (File trainingFile : trainingFilesContent.keySet()) {
-		// lineMatchValues.put(CrashLineComparator.compareFiles(testingFile,
-		// trainingFile), trainingFile);
-		// }
-		// Double maxMatchValue = Double.MAX_VALUE;
-		// String bucket = "";
-		// for (Double value : lineMatchValues.keySet())
-		// if (value < maxMatchValue) {
-		// maxMatchValue = value;
-		// bucket = lineMatchValues.get(value).getParent()
-		// .substring(lineMatchValues.get(value).getParent().length() - 10);
-		// }
-		// result.put(testingFile.getName().substring(0,
-		// testingFile.getName().length() - 4), bucket);
-		// }
 		SortedSet<String> sortedList = new TreeSet<String>(new Comparator<String>() {
 			@Override
 			public int compare(String a, String b) {
@@ -144,7 +133,8 @@ public class BucketAnalyzer {
 			while (scanner.hasNext()) {
 				line = scanner.nextLine();
 				if (line.startsWith("#")) {
-					stackTraceMap.get(fileContent).addCrashLines(crashLine);
+					if (crashLine.getLineNumber() != null)
+						stackTraceMap.get(fileContent).addCrashLines(crashLine);
 					crashLine = new CrashLine();
 					Integer index = line.indexOf(" ");
 					Integer crashLineNumber = Integer.parseInt(line.substring(1, index));
@@ -152,7 +142,8 @@ public class BucketAnalyzer {
 				}
 				getAllKeywordsFromLine(line, crashLine);
 			}
-			stackTraceMap.get(fileContent).getCrashLines().add(crashLine);
+			if (crashLine.getLineNumber() != null)
+				stackTraceMap.get(fileContent).addCrashLines(crashLine);
 			scanner.close();
 		}
 
@@ -187,6 +178,8 @@ public class BucketAnalyzer {
 				}
 				break;
 			default:
+				// if (keywordValue.startsWith("0x"))
+				// crashLine.addKeyword(new AddressKeywod(keywordValue));
 				break;
 			}
 		}
