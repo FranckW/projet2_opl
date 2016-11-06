@@ -1,4 +1,4 @@
-package project_2_OPL;
+package model;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -18,6 +18,8 @@ import keyword.AtKeyword;
 import keyword.FromKeyword;
 import keyword.InKeyword;
 import keyword.Keyword;
+import model.CrashLine;
+import model.CrashReport;
 
 public class BucketAnalyzer {
 
@@ -56,14 +58,16 @@ public class BucketAnalyzer {
 		fillKeywordsMap(stackTraceTesting, testingFilesContent);
 		fillKeywordsMap(stackTraceTraining, trainingFilesContent);
 
-		for (File file : testingFilesContent.keySet()) {
-			System.out.println(file.getName());
-			for (CrashLine crashLine : stackTraceTesting.get(testingFilesContent.get(file)).getCrashLines()) {
-				System.out.println("#" + crashLine.getLineNumber());
-				for (Keyword keyword : crashLine.getKeywords())
-					System.out.print(" " + keyword.getValue());
-			}
-		}
+		// for (File file : testingFilesContent.keySet()) {
+		// System.out.println(file.getName());
+		// for (CrashLine crashLine :
+		// stackTraceTesting.get(testingFilesContent.get(file)).getCrashLines())
+		// {
+		// System.out.println("#" + crashLine.getLineNumber());
+		// for (Keyword keyword : crashLine.getKeywords())
+		// System.out.print(" " + keyword.getValue());
+		// }
+		// }
 
 		List<Thread> threads = new ArrayList<Thread>();
 		for (File testingFile : testingFilesContent.keySet()) {
@@ -91,7 +95,7 @@ public class BucketAnalyzer {
 			System.out.println(testingFileName + " -> " + result.get(testingFileName));
 	}
 
-	private void loadContentOfFiles(List<File> files, Map<File, String> filesContent) {
+	public void loadContentOfFiles(List<File> files, Map<File, String> filesContent) {
 		FileReader fileReader = null;
 		for (File file : files) {
 			try {
@@ -118,7 +122,7 @@ public class BucketAnalyzer {
 		}
 	}
 
-	private void fillKeywordsMap(Map<String, CrashReport> stackTraceMap, Map<File, String> filesContent) {
+	public void fillKeywordsMap(Map<String, CrashReport> stackTraceMap, Map<File, String> filesContent) {
 		String fileContent = null;
 		for (File file : filesContent.keySet()) {
 			fileContent = filesContent.get(file);
@@ -149,7 +153,7 @@ public class BucketAnalyzer {
 
 	}
 
-	private void getAllKeywordsFromLine(String line, CrashLine crashLine) {
+	public void getAllKeywordsFromLine(String line, CrashLine crashLine) {
 		Scanner scanner = new Scanner(line);
 		String word = null;
 		Keyword keyword;
@@ -178,7 +182,8 @@ public class BucketAnalyzer {
 				}
 				break;
 			default:
-				// if (keywordValue.startsWith("0x"))
+				// if (keywordValue.startsWith("0x") &&
+				// !keywordValue.endsWith(",") && !keywordValue.endsWith("}"))
 				// crashLine.addKeyword(new AddressKeywod(keywordValue));
 				break;
 			}
@@ -187,7 +192,7 @@ public class BucketAnalyzer {
 
 	}
 
-	private void getAllFiles(File folder, List<File> fileList) {
+	public void getAllFiles(File folder, List<File> fileList) {
 		for (final File fileEntry : folder.listFiles())
 			if (fileEntry.isDirectory())
 				getAllFiles(fileEntry, fileList);

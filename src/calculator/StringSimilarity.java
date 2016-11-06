@@ -1,4 +1,4 @@
-package project_2_OPL;
+package calculator;
 
 public class StringSimilarity {
 

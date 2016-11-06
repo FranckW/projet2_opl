@@ -5,6 +5,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import calculator.CrashLineComparator;
+import model.CrashLine;
+import model.CrashReport;
+
 public class TestingFileAnalyzeThread implements Runnable {
 
 	private Map<String, CrashReport> stackTraceTraining;
@@ -29,41 +33,34 @@ public class TestingFileAnalyzeThread implements Runnable {
 		System.out.println("file titled : " + testingFile.getName());
 		Map<String, Double> mapMatchValueBucketName = new HashMap<String, Double>();
 		for (File trainingFile : trainingFilesContent.keySet()) {
+			if (!mapMatchValueBucketName.containsKey(trainingFile.getParentFile().getParent()))
+				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), 0.0);
 			ArrayList<Double> lineMatchValues = new ArrayList<Double>();
 			for (CrashLine crashLineTesting : stackTraceTesting.get(testingFilesContent.get(testingFile))
 					.getCrashLines())
 				if (stackTraceTraining.get(trainingFilesContent.get(trainingFile)) != null)
 					for (CrashLine crashLineTraining : stackTraceTraining.get(trainingFilesContent.get(trainingFile))
 							.getCrashLines()) {
-						boolean isInMatchingSequence = false;
-						double matchScore = CrashLineComparator.compareLines(crashLineTesting, crashLineTraining,
-								isInMatchingSequence);
-						if (matchScore < 100) {
-							isInMatchingSequence = false;
-						} else {
-							isInMatchingSequence = true;
-						}
+						double matchScore = CrashLineComparator.compareLines(crashLineTesting, crashLineTraining);
 						lineMatchValues.add(matchScore);
 					}
 			double sum = 0;
 			for (Double distance : lineMatchValues)
 				sum += distance;
-			if (mapMatchValueBucketName.containsKey(trainingFile.getParentFile().getParent())) {
-				if (mapMatchValueBucketName.get(trainingFile.getParentFile().getParent()) > sum)
-					mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), sum);
-			} else {
+			sum /= lineMatchValues.size();
+			if (mapMatchValueBucketName.get(trainingFile.getParentFile().getParent()) < sum) {
 				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), sum);
 			}
-			String bucket = null;
-			Double maxMatchValue = 0.0;
-			for (String bucketName : mapMatchValueBucketName.keySet()) {
-				if (mapMatchValueBucketName.get(bucketName) > maxMatchValue) {
-					maxMatchValue = mapMatchValueBucketName.get(bucketName);
-					bucket = bucketName.substring(bucketName.length() - 9);
-				}
-			}
-			BucketAnalyzer.result.put(testingFile.getName().substring(0, testingFile.getName().length() - 4), bucket);
 		}
+		String bucket = null;
+		Double maxMatchValue = 0.0;
+		for (String bucketName : mapMatchValueBucketName.keySet()) {
+			if (mapMatchValueBucketName.get(bucketName) > maxMatchValue) {
+				maxMatchValue = mapMatchValueBucketName.get(bucketName);
+				bucket = bucketName.substring(bucketName.length() - 9);
+			}
+		}
+		BucketAnalyzer.result.put(testingFile.getName().substring(0, testingFile.getName().length() - 4), bucket);
 	}
 
 }
