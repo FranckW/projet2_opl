@@ -56,7 +56,7 @@ public class CrashLineComparator {
 			boolean isInMatchSequence) {
 		Double score = 0.0;
 		if (crashLine1.getLineNumber().toString().equals(crashLine2.getLineNumber().toString()))
-			score += 1;
+			score += 200;
 		for (Keyword keyword1 : crashLine1.getKeywords())
 			for (Keyword keyword2 : crashLine2.getKeywords())
 				if (!keyword1.getValue().equals("??") && !keyword2.getValue().equals("??"))
