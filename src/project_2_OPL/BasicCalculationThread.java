@@ -21,22 +21,30 @@ public class BasicCalculationThread implements Runnable {
 
 	@Override
 	public void run() {
+		if (testingFile.length() > 100000) {
+			System.out.println("size too high");
+			BucketAnalyzer.result.put(testingFile.getName().substring(0, testingFile.getName().length() - 4),
+					"000000000");
+			return;
+		}
 		System.out.println("file titled : " + testingFile.getName());
 		Map<String, Double> mapMatchValueBucketName = new HashMap<String, Double>();
-		for (File trainingFile : trainingFilesContent.keySet())
-			mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), CrashLineComparator
-					.stringSimilarityCalculation(testingFileContent, trainingFilesContent.get(trainingFile)));
+		for (File trainingFile : trainingFilesContent.keySet()) {
+			if (!mapMatchValueBucketName.containsKey(trainingFile.getParentFile().getParent()))
+				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), 0.0);
+			double matchValue = CrashLineComparator.stringSimilarityCalculation(testingFileContent,
+					trainingFilesContent.get(trainingFile));
+			if (mapMatchValueBucketName.get(trainingFile.getParentFile().getParent()) < matchValue)
+				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), matchValue);
+		}
 		String bucket = null;
 		Double maxMatchValue = 0.0;
-		for (String bucketName : mapMatchValueBucketName.keySet()) {
+		for (String bucketName : mapMatchValueBucketName.keySet())
 			if (mapMatchValueBucketName.get(bucketName) > maxMatchValue) {
 				maxMatchValue = mapMatchValueBucketName.get(bucketName);
 				bucket = bucketName.substring(bucketName.length() - 9);
 			}
-		}
-		System.out.println("file titled : " + testingFile.getName() + " analyzed");
 		BucketAnalyzer.result.put(testingFile.getName().substring(0, testingFile.getName().length() - 4), bucket);
-
 	}
 
 }

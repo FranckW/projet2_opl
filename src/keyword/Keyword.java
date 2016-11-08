@@ -11,9 +11,4 @@ public abstract class Keyword {
 		this.value = value;
 	}
 
-	@Override
-	public String toString() {
-		return value;
-	}
-
 }

@@ -3,47 +3,40 @@ package test;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Test;
 
 import calculator.CrashLineComparator;
+import calculator.HammingDistance;
+import calculator.LevenshteinDistance;
+import calculator.StringSimilarity;
 import keyword.FromKeyword;
 import keyword.InKeyword;
 import model.CrashLine;
-import model.CrashReport;
 import project_2_OPL.BucketAnalyzer;
-import project_2_OPL.TestingFileAnalyzeThread;
 
 public class CalculatorTest {
 
+	@SuppressWarnings("static-access")
 	@Test
-	public void testingFile88ShouldBeInBucket000007600() {
+	public void testAnalyzeFile88ShouldBeInBucket000007600() {
 		BucketAnalyzer bucketAnalyzer = new BucketAnalyzer();
-		loadFilesAndTheirContent(bucketAnalyzer);
+		final File testingFile = new File("nautilus-testing-test");
+		final File trainingFile = new File("nautilus-training-test");
+		bucketAnalyzer.analyze(testingFile, trainingFile);
 
-		Map<String, CrashReport> stackTraceTraining = new HashMap<String, CrashReport>();
-		Map<String, CrashReport> stackTraceTesting = new HashMap<String, CrashReport>();
-		bucketAnalyzer.loadContentOfFiles(bucketAnalyzer.testingFiles, bucketAnalyzer.testingFilesContent);
-		bucketAnalyzer.loadContentOfFiles(bucketAnalyzer.trainingFiles, bucketAnalyzer.trainingFilesContent);
+		for (String testingFileName : bucketAnalyzer.result.keySet())
+			if (testingFileName.equals("88"))
+				assertTrue(bucketAnalyzer.result.get(testingFileName).equals("000007600"));
+	}
 
-		bucketAnalyzer.fillKeywordsMap(stackTraceTesting, bucketAnalyzer.testingFilesContent);
-		bucketAnalyzer.fillKeywordsMap(stackTraceTraining, bucketAnalyzer.trainingFilesContent);
-
-		Thread t = null;
-		for (File testFile : bucketAnalyzer.testingFilesContent.keySet()) {
-			TestingFileAnalyzeThread testingFileAnalyzeThread = new TestingFileAnalyzeThread(stackTraceTraining,
-					stackTraceTesting, bucketAnalyzer.trainingFilesContent, bucketAnalyzer.testingFilesContent,
-					testFile);
-			t = new Thread(testingFileAnalyzeThread);
-			t.start();
-		}
-		try {
-			t.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	@SuppressWarnings("static-access")
+	@Test
+	public void testBasicCalculator() {
+		BucketAnalyzer bucketAnalyzer = new BucketAnalyzer();
+		final File testingFile = new File("nautilus-testing-test");
+		final File trainingFile = new File("nautilus-training-test");
+		bucketAnalyzer.analyzeBasic(testingFile, trainingFile);
 
 		for (String testingFileName : bucketAnalyzer.result.keySet())
 			if (testingFileName.equals("88"))
@@ -82,15 +75,30 @@ public class CalculatorTest {
 
 	@Test
 	public void testKeywordsWellExtractedFromLine() {
-		String line = "#8  0xb7073bc2 in g_signal_emit () from /usr/lib/libgobject-2.0.so.0";
-		CrashLine crashLine = new CrashLine();
-		BucketAnalyzer bucketAnalyzer = new BucketAnalyzer();
-		bucketAnalyzer.getAllKeywordsFromLine(line, crashLine);
+		CrashLine crashLine = setupCrashLine1();
 		assertTrue(crashLine.getKeywords().size() == 2);
 		assertTrue(crashLine.getKeywords().get(0) instanceof InKeyword);
 		assertTrue(crashLine.getKeywords().get(0).getValue().equals("g_signal_emit"));
 		assertTrue(crashLine.getKeywords().get(1) instanceof FromKeyword);
 		assertTrue(crashLine.getKeywords().get(1).getValue().equals("/usr/lib/libgobject-2.0.so.0"));
+	}
+
+	private CrashLine setupCrashLine1() {
+		String line = "#8  0xb7073bc2 in g_signal_emit () from /usr/lib/libgobject-2.0.so.0";
+		CrashLine crashLine = new CrashLine();
+		BucketAnalyzer bucketAnalyzer = new BucketAnalyzer();
+		bucketAnalyzer.getAllKeywordsFromLine(line, crashLine);
+		crashLine.setLineNumber(8);
+		return crashLine;
+	}
+
+	private CrashLine setupCrashLine2() {
+		String line = "#9  0xb7073bc2 in g_signal_emit () from /usr/lip/libgobject-2.0.so.0";
+		CrashLine crashLine = new CrashLine();
+		BucketAnalyzer bucketAnalyzer = new BucketAnalyzer();
+		bucketAnalyzer.getAllKeywordsFromLine(line, crashLine);
+		crashLine.setLineNumber(9);
+		return crashLine;
 	}
 
 	@Test
@@ -108,7 +116,115 @@ public class CalculatorTest {
 		crashLine1.setLineNumber(8);
 		crashLine2.setLineNumber(8);
 		crashLine3.setLineNumber(1);
-		assertTrue(CrashLineComparator.compareLines(crashLine1, crashLine2, false) == 600.0);
-		assertTrue(CrashLineComparator.compareLines(crashLine1, crashLine3, false) == 0.0);
+		assertTrue(CrashLineComparator.compareLines(crashLine1, crashLine2) == 600.0);
+		assertTrue(CrashLineComparator.compareLines(crashLine1, crashLine3) == 0.0);
+	}
+
+	@Test
+	public void testHammingCalculation() {
+		CrashLine crashLine1 = setupCrashLine1();
+		CrashLine crashLine2 = setupCrashLine2();
+		assertTrue(CrashLineComparator.hammingCalculation(crashLine1, crashLine2) == 2);
+		assertTrue(CrashLineComparator.hammingCalculation(crashLine1, crashLine1) == 0);
+	}
+
+	@Test
+	public void testLevenshteinCalculation() {
+		CrashLine crashLine1 = setupCrashLine1();
+		CrashLine crashLine2 = setupCrashLine2();
+		assertTrue(CrashLineComparator.levenshteinCalculation(crashLine1, crashLine2) == 2);
+		assertTrue(CrashLineComparator.levenshteinCalculation(crashLine1, crashLine1) == 0);
+	}
+
+	@Test
+	public void testStringSimilarity() {
+		String line1 = "#9  0xb7073bc2 in g_signal_emit () from /usr/lib/libgobject-2.0.so.0";
+		String line2 = "#8  0xb7073bc2 in g_signal_emit () from /usr/lib/libgobject-2.0.so.0";
+		assertTrue(CrashLineComparator.stringSimilarityCalculation(line1, line1) == 1);
+		assertTrue(CrashLineComparator.stringSimilarityCalculation(line1, line2) < 1);
+	}
+
+	@Test
+	public void testTooLongFileIsPutInDefaultBucket() {
+		BucketAnalyzer bucketAnalyzer = new BucketAnalyzer();
+		final File testTooLongFile = new File("testTooLongFile");
+		final File trainingFile = new File("nautilus-training");
+		bucketAnalyzer.analyzeBasic(testTooLongFile, trainingFile);
+		for (String testingFileName : bucketAnalyzer.result.keySet())
+			if (testingFileName.equals("98"))
+				assertTrue(bucketAnalyzer.result.get(testingFileName).equals("000000000"));
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testHammingNullArgsRaiseException() {
+		HammingDistance hammingDistance = new HammingDistance();
+		hammingDistance.apply(null, null);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testLevenshteinNullArgsRaiseException() {
+		LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
+		levenshteinDistance.apply(null, null);
+	}
+
+	@Test
+	public void testHammingReturnsIntegerMaxValueWhenArgsNotSameSize() {
+		HammingDistance hammingDistance = new HammingDistance();
+		assertTrue(hammingDistance.apply("foo", "foofoo").equals(Integer.MAX_VALUE));
+	}
+
+	@Test
+	public void testSimilarityReturnsOneWhenEmptyStrings() {
+		assertTrue(StringSimilarity.similarity("", "") == 1.0);
+	}
+
+	@Test
+	public void testLevenshteinReturnsOtherStringsSizeWhenEmptyString() {
+		LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
+		assertTrue(levenshteinDistance.apply("", "foo") == 3);
+		assertTrue(levenshteinDistance.apply("foo", "") == 3);
+	}
+
+	@Test
+	public void testLevenshteinSwapStringsWhenFirstIsShorter() {
+		LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
+		assertTrue(levenshteinDistance.apply("fooo", "fo") == levenshteinDistance.apply("fo", "fooo"));
+	}
+
+	@Test
+	public void testCompareLinesReturnsZeroWhenACrashLineIsNull() {
+		assertTrue(CrashLineComparator.compareLines(null, setupCrashLine1()) == 0.0);
+		assertTrue(CrashLineComparator.compareLines(setupCrashLine1(), null) == 0.0);
+	}
+
+	@Test
+	public void testCompareLinesReturnsZeroWhenLineNumberMissing() {
+		String line = "#8  0xb7073bc2 in g_signal_emit () from /usr/lib/libgobject-2.0.so.0";
+		CrashLine crashLine = new CrashLine();
+		BucketAnalyzer bucketAnalyzer = new BucketAnalyzer();
+		bucketAnalyzer.getAllKeywordsFromLine(line, crashLine);
+		assertTrue(CrashLineComparator.compareLines(crashLine, setupCrashLine1()) == 0.0);
+		assertTrue(CrashLineComparator.compareLines(setupCrashLine1(), crashLine) == 0.0);
+	}
+
+	@Test
+	public void testUnknownKeywordAreSkipped() {
+		BucketAnalyzer bucketAnalyzer = new BucketAnalyzer();
+
+		String line1 = "#8  0xb7073bc2 in ?? ()";
+		CrashLine crashLine1 = new CrashLine();
+		bucketAnalyzer.getAllKeywordsFromLine(line1, crashLine1);
+
+		String line2 = "#8  0xb7073bc2 in ?? ()";
+		CrashLine crashLine2 = new CrashLine();
+		bucketAnalyzer.getAllKeywordsFromLine(line2, crashLine2);
+
+		crashLine1.setLineNumber(8);
+		crashLine2.setLineNumber(8);
+
+		assertTrue(CrashLineComparator.compareLines(crashLine1, crashLine2) == 200.0);
+		assertTrue(CrashLineComparator.hammingCalculation(crashLine1, crashLine2) == 0);
+		assertTrue(CrashLineComparator.levenshteinCalculation(crashLine1, crashLine2) == 0);
+
 	}
 }
