@@ -33,6 +33,7 @@ public class TestingFileAnalyzeThread implements Runnable {
 		System.out.println("file titled : " + testingFile.getName());
 		Map<String, Double> mapMatchValueBucketName = new HashMap<String, Double>();
 		for (File trainingFile : trainingFilesContent.keySet()) {
+			boolean isInMatchSequence = false;
 			if (!mapMatchValueBucketName.containsKey(trainingFile.getParentFile().getParent()))
 				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), 0.0);
 			ArrayList<Double> lineMatchValues = new ArrayList<Double>();
@@ -41,7 +42,12 @@ public class TestingFileAnalyzeThread implements Runnable {
 				if (stackTraceTraining.get(trainingFilesContent.get(trainingFile)) != null)
 					for (CrashLine crashLineTraining : stackTraceTraining.get(trainingFilesContent.get(trainingFile))
 							.getCrashLines()) {
-						double matchScore = CrashLineComparator.compareLines(crashLineTesting, crashLineTraining);
+						double matchScore = CrashLineComparator.compareLines(crashLineTesting, crashLineTraining,
+								isInMatchSequence);
+						if (matchScore >= 200)
+							isInMatchSequence = true;
+						else
+							isInMatchSequence = false;
 						lineMatchValues.add(matchScore);
 					}
 			double sum = 0;

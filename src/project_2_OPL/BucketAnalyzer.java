@@ -40,16 +40,17 @@ public class BucketAnalyzer {
 		Map<String, CrashReport> stackTraceTesting = new HashMap<String, CrashReport>();
 
 		// dummy version random
+		// List<String> buckets = new ArrayList<String>();
+		// for (File trainingFile : trainingFiles) {
+		// String bucketname = trainingFile.getParentFile().getParent()
+		// .substring(trainingFile.getParentFile().getParent().length() - 9);
+		// if (!buckets.contains(bucketname))
+		// buckets.add(bucketname);
+		// }
 		// for (File testingFile : testingFiles) {
-		// int rand = (int) (Math.random() * (trainingFiles.size()) - 1);
-		// while ((trainingFiles.get(rand).length() <= testingFile.length() +
-		// 1000)
-		// && (trainingFiles.get(rand).length() >= testingFile.length() - 1000))
-		// rand = (int) (Math.random() * (trainingFiles.size()) - 1);
+		// int rand = (int) (Math.random() * buckets.size() - 1);
 		// result.put(testingFile.getName().substring(0,
-		// testingFile.getName().length() - 4),
-		// trainingFiles.get(rand).getParent().substring(trainingFiles.get(rand).getParent().length()
-		// - 10));
+		// testingFile.getName().length() - 4), buckets.get(rand));
 		// }
 
 		loadContentOfFiles(testingFiles, testingFilesContent);
@@ -74,6 +75,10 @@ public class BucketAnalyzer {
 			TestingFileAnalyzeThread testingFileAnalyzeThread = new TestingFileAnalyzeThread(stackTraceTraining,
 					stackTraceTesting, trainingFilesContent, testingFilesContent, testingFile);
 			Thread t = new Thread(testingFileAnalyzeThread);
+			// BasicCalculationThread testBasicThread = new
+			// BasicCalculationThread(testingFilesContent.get(testingFile),
+			// trainingFilesContent, testingFile);
+			// Thread t = new Thread(testBasicThread);
 			threads.add(t);
 			t.start();
 		}
