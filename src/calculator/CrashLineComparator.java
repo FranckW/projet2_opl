@@ -10,15 +10,25 @@ public class CrashLineComparator {
 				|| crashLine2.getLineNumber() == null)
 			return 0.0;
 		else {
-			// return levenshteinCalculation(crashLine1, crashLine2);
+			return levenshteinCalculation(crashLine1, crashLine2);
 			// return hammingCalculation(crashLine1, crashLine2);
 			// return stringSimilarityCalculation(crashLine1, crashLine2);
-			return binaryStringSimilarityCalculation(crashLine1, crashLine2);
+			// return binaryStringSimilarityCalculation(crashLine1, crashLine2);
 		}
 	}
 
 	public static double stringSimilarityCalculation(String fileContent1, String fileContent2) {
 		return StringSimilarity.similarity(fileContent1, fileContent2);
+	}
+
+	public static double levenshteinCalculation(String fileContent1, String fileContent2) {
+		LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
+		return levenshteinDistance.apply(fileContent1, fileContent2);
+	}
+
+	public static double hammingCalculation(String fileContent1, String fileContent2) {
+		HammingDistance hammingDistance = new HammingDistance();
+		return hammingDistance.apply(fileContent1, fileContent2);
 	}
 
 	public static double levenshteinCalculation(CrashLine crashLine1, CrashLine crashLine2) {

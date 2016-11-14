@@ -31,16 +31,16 @@ public class BasicCalculationThread implements Runnable {
 		Map<String, Double> mapMatchValueBucketName = new HashMap<String, Double>();
 		for (File trainingFile : trainingFilesContent.keySet()) {
 			if (!mapMatchValueBucketName.containsKey(trainingFile.getParentFile().getParent()))
-				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), 0.0);
-			double matchValue = CrashLineComparator.stringSimilarityCalculation(testingFileContent,
+				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), Double.MAX_VALUE);
+			double matchValue = CrashLineComparator.levenshteinCalculation(testingFileContent,
 					trainingFilesContent.get(trainingFile));
-			if (mapMatchValueBucketName.get(trainingFile.getParentFile().getParent()) < matchValue)
+			if (mapMatchValueBucketName.get(trainingFile.getParentFile().getParent()) > matchValue)
 				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), matchValue);
 		}
 		String bucket = null;
-		Double maxMatchValue = 0.0;
+		Double maxMatchValue = Double.MAX_VALUE;
 		for (String bucketName : mapMatchValueBucketName.keySet())
-			if (mapMatchValueBucketName.get(bucketName) > maxMatchValue) {
+			if (mapMatchValueBucketName.get(bucketName) < maxMatchValue) {
 				maxMatchValue = mapMatchValueBucketName.get(bucketName);
 				bucket = bucketName.substring(bucketName.length() - 9);
 			}

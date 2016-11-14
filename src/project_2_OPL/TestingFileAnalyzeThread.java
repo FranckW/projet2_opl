@@ -48,7 +48,7 @@ public class TestingFileAnalyzeThread implements Runnable {
 			for (Double distance : lineMatchValues)
 				sum += distance;
 			sum /= lineMatchValues.size();
-			if (mapMatchValueBucketName.get(trainingFile.getParentFile().getParent()) < sum) {
+			if (mapMatchValueBucketName.get(trainingFile.getParentFile().getParent()) > sum) {
 				mapMatchValueBucketName.put(trainingFile.getParentFile().getParent(), sum);
 			}
 		}
